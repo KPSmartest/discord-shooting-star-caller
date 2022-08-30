@@ -1,0 +1,6 @@
+{
+  "extends": "@tsconfig/node17/tsconfig.json",
+  "compilerOptions": {
+    "target": "es2017"
+  }
+}
