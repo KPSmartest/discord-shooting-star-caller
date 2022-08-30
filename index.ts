@@ -28,7 +28,7 @@ server.post<{ Body: StarData }>("/shooting-star", async (request) => {
 
   const messageConfig = {
     username: "Sam Uffindell",
-    content: `🌏 W${world} 💪 T${tierToEmoji[tier]} 🗺 ${location} 🗣 ${sender}`,
+    content: `🌏 W${world}    ${tierToEmoji[tier]}    T${tier} 🗺 ${location}    🗣 ${sender}`,
   };
 
   fetch(
