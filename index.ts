@@ -2,6 +2,19 @@ import fastify from "fastify";
 import fetch from "node-fetch";
 import { StarData } from "./types";
 
+const tierToEmoji = {
+  0: "💀",
+  1: "💩",
+  2: "😕",
+  3: "🌝",
+  4: "👀",
+  5: "👯‍♂️",
+  6: "🕺",
+  7: "🤌",
+  8: "💪",
+  9: "🦧",
+};
+
 const server = fastify();
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
@@ -15,7 +28,7 @@ server.post<{ Body: StarData }>("/shooting-star", async (request) => {
 
   const messageConfig = {
     username: "Sam Uffindell",
-    content: `🌏 W${world} 💪 T${tier} 🗺 ${location} 🗣 ${sender}`,
+    content: `🌏 W${world} 💪 T${tierToEmoji[tier]} 🗺 ${location} 🗣 ${sender}`,
   };
 
   fetch(
