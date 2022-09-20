@@ -18,18 +18,18 @@ const tierToEmoji = {
 };
 
 type AnnouncerProfile = {
-  name: string;
+  username: string;
   avatar_url: string;
 };
 
 const announcers: Record<string, AnnouncerProfile> = {
   aaronGilmore: {
-    name: "Aaron Gilmore",
+    username: "Aaron Gilmore",
     avatar_url:
       "https://wellington.govt.nz/-/media/your-council/elections/2022/candidate-images/gilmore_aaron_eastern_99.jpg?mw=540",
   },
   samUffindell: {
-    name: "Sam Uffindell",
+    username: "Sam Uffindell",
     avatar_url:
       "https://www.nzherald.co.nz/resizer/NBmOJBbufGFGaZTQkvKL1IJPGBE=/576x408/smart/filters:quality(70)/cloudfront-ap-southeast-2.images.arcpublishing.com/nzme/WUTLNFR3NGCMITQ5HXZZIYF5VE.jpg",
   },
