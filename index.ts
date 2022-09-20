@@ -17,6 +17,34 @@ const tierToEmoji = {
   9: "🦧",
 };
 
+type AnnouncerProfile = {
+  name: string;
+  avatar_url: string;
+};
+
+const announcers: Record<string, AnnouncerProfile> = {
+  aaronGilmore: {
+    name: "Aaron Gilmore",
+    avatar_url:
+      "https://wellington.govt.nz/-/media/your-council/elections/2022/candidate-images/gilmore_aaron_eastern_99.jpg?mw=540",
+  },
+  samUffindell: {
+    name: "Sam Uffindell",
+    avatar_url:
+      "https://www.nzherald.co.nz/resizer/NBmOJBbufGFGaZTQkvKL1IJPGBE=/576x408/smart/filters:quality(70)/cloudfront-ap-southeast-2.images.arcpublishing.com/nzme/WUTLNFR3NGCMITQ5HXZZIYF5VE.jpg",
+  },
+} as const;
+
+function getAnnouncer(): AnnouncerProfile {
+  const randomInt = Math.floor(1 + Math.random() * (10 - 1 + 1));
+
+  if (randomInt >= 3) {
+    return announcers.samUffindell;
+  }
+
+  return announcers.aaronGilmore;
+}
+
 const server = fastify();
 
 server.get("/", async (_request, reply) => {
@@ -26,7 +54,10 @@ server.get("/", async (_request, reply) => {
 server.post<{Body: StarData}>("/shooting-star", async (request) => {
   const {sender, world, tier, location} = request.body;
 
+  const announcer = getAnnouncer();
+
   const messageConfig = {
+    ...announcer,
     content: `🌏 W${world}    ${tierToEmoji[tier]} T${tier}    🗺 ${location}    🗣 ${sender}`,
   };
 
