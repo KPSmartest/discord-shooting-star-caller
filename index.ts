@@ -26,12 +26,12 @@ const announcers: Record<string, AnnouncerProfile> = {
   aaronGilmore: {
     username: "Aaron Gilmore",
     avatar_url:
-      "https://wellington.govt.nz/-/media/your-council/elections/2022/candidate-images/gilmore_aaron_eastern_99.jpg?mw=540",
+      "https://res.cloudinary.com/djboxbtij/image/upload/v1668370414/discord-shooting-star-caller/aaron_x1xgrd.jpg",
   },
   samUffindell: {
     username: "Sam Uffindell",
     avatar_url:
-      "https://www.nzherald.co.nz/resizer/NBmOJBbufGFGaZTQkvKL1IJPGBE=/576x408/smart/filters:quality(70)/cloudfront-ap-southeast-2.images.arcpublishing.com/nzme/WUTLNFR3NGCMITQ5HXZZIYF5VE.jpg",
+      "https://res.cloudinary.com/djboxbtij/image/upload/v1668370418/discord-shooting-star-caller/sam_fzdb6t.jpg",
   },
 } as const;
 
