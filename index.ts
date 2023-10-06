@@ -1,7 +1,7 @@
 import fastify from "fastify";
 import fetch from "node-fetch";
 
-import {DISCORD_WEBHOOK_URL, PORT} from "./config";
+import {DISCORD_WEBHOOK_URL, DISCORD_UPDATE_WEBHOOK_URL, PORT} from "./config";
 import {StarData} from "./types";
 
 const tierToEmoji = {
@@ -45,8 +45,13 @@ function getAnnouncer(): AnnouncerProfile {
   return announcers.aaronGilmore;
 }
 
-function sendMessage(url, request) {
-  const {sender, world, tier, location} = request.body;
+type SendMessageParams = {
+  webhookUrl: string;
+  data: StarData;
+};
+
+function sendMessage({webhookUrl, data}: SendMessageParams) {
+  const {sender, world, tier, location} = data;
 
   const announcer = getAnnouncer();
 
@@ -55,7 +60,7 @@ function sendMessage(url, request) {
     content: `🌏 W${world}    ${tierToEmoji[tier]} T${tier}    🗺 ${location}    🗣 ${sender}`,
   };
 
-  fetch(url, {
+  fetch(webhookUrl, {
     method: "POST",
     body: JSON.stringify(messageConfig),
     headers: {"Content-Type": "application/json"},
@@ -69,11 +74,11 @@ server.get("/", async (_request, reply) => {
 });
 
 server.post<{Body: StarData}>("/shooting-star", async (request) => {
-  sendMessage(DISCORD_WEBHOOK_URL, request);
+  sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: request.body});
 });
 
 server.post<{Body: StarData}>("/shooting-star-update", async (request) => {
-  sendMessage(DISCORD_UPDATE_WEBHOOK_URL, request);
+  sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: request.body});
 });
 
 server.listen({port: PORT, host: "::"}, (err, address) => {
