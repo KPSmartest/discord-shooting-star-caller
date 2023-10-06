@@ -14,6 +14,7 @@ You will need to make a copy of the `.env.example` file and name it `.env`. In `
 
 ```bash
 DISCORD_WEBHOOK_URL=your-webhook-url-goes-here
+DISCORD_UPDATE_WEBHOOK_URL=your-update-webhook-url-goes-here
 ```
 
 ## Building the app
