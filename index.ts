@@ -45,13 +45,7 @@ function getAnnouncer(): AnnouncerProfile {
   return announcers.aaronGilmore;
 }
 
-const server = fastify();
-
-server.get("/", async (_request, reply) => {
-  reply.send({hello: "world"});
-});
-
-server.post<{Body: StarData}>("/shooting-star", async (request) => {
+function sendMessage(url, request) {
   const {sender, world, tier, location} = request.body;
 
   const announcer = getAnnouncer();
@@ -61,11 +55,25 @@ server.post<{Body: StarData}>("/shooting-star", async (request) => {
     content: `🌏 W${world}    ${tierToEmoji[tier]} T${tier}    🗺 ${location}    🗣 ${sender}`,
   };
 
-  fetch(DISCORD_WEBHOOK_URL, {
+  fetch(url, {
     method: "POST",
     body: JSON.stringify(messageConfig),
     headers: {"Content-Type": "application/json"},
   });
+}
+
+const server = fastify();
+
+server.get("/", async (_request, reply) => {
+  reply.send({hello: "world"});
+});
+
+server.post<{Body: StarData}>("/shooting-star", async (request) => {
+  sendMessage(DISCORD_WEBHOOK_URL, request);
+});
+
+server.post<{Body: StarData}>("/shooting-star-update", async (request) => {
+  sendMessage(DISCORD_UPDATE_WEBHOOK_URL, request);
 });
 
 server.listen({port: PORT, host: "::"}, (err, address) => {
