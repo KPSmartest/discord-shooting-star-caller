@@ -4,3 +4,9 @@ export type StarData = {
   location: string;
   sender: string;
 };
+
+export enum SendAction {
+  NEW,
+  UPDATE,
+  IGNORE
+}

@@ -1,8 +1,8 @@
 import fastify from "fastify";
 import fetch from "node-fetch";
 
-import {DISCORD_WEBHOOK_URL, DISCORD_UPDATE_WEBHOOK_URL, PORT} from "./config";
-import {StarData} from "./types";
+import {DISCORD_WEBHOOK_URL, DISCORD_UPDATE_WEBHOOK_URL, PORT, CACHE_TIMEOUT} from "./config";
+import {StarData, SendAction} from "./types";
 
 const tierToEmoji = {
   0: "💀",
@@ -50,8 +50,29 @@ type SendMessageParams = {
   data: StarData;
 };
 
+function getAction(data: StarData): SendAction {
+  const {world, tier, location} = data;
+  if (world in cache) {
+    const cached = cache[world];
+    if (Date.now() - cached.time > CACHE_TIMEOUT || location !== cached.location || tier > cached.tier) {
+      return SendAction.NEW;
+    }
+    if (tier === cached.tier) {
+      return SendAction.IGNORE;
+    }
+    return SendAction.UPDATE;
+  }
+  return SendAction.NEW;
+}
+
 function sendMessage({webhookUrl, data}: SendMessageParams) {
   const {sender, world, tier, location} = data;
+
+  cache[world] = {
+    tier: tier,
+    location: location,
+    time: Date.now()
+  };
 
   const announcer = getAnnouncer();
 
@@ -67,6 +88,8 @@ function sendMessage({webhookUrl, data}: SendMessageParams) {
   });
 }
 
+const cache = Object.create(null);
+
 const server = fastify();
 
 server.get("/", async (_request, reply) => {
@@ -74,11 +97,18 @@ server.get("/", async (_request, reply) => {
 });
 
 server.post<{Body: StarData}>("/shooting-star", async (request) => {
-  sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: request.body});
-});
-
-server.post<{Body: StarData}>("/shooting-star-update", async (request) => {
-  sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: request.body});
+  const data = request.body;
+  const action = getAction(data);
+  switch(action) {
+    case SendAction.NEW:
+      sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: data});
+      break;
+    case SendAction.UPDATE:
+      sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: data});
+      break;
+    default:
+      console.log(`Ignoring POST request: ${data}`);
+  }
 });
 
 server.listen({port: PORT, host: "::"}, (err, address) => {
