@@ -54,10 +54,10 @@ function getAction(data: StarData): SendAction {
   const {world, tier, location} = data;
   if (world in cache) {
     const cached = cache[world];
-    if (Date.now() - cached.time > CACHE_TIMEOUT || location !== cache.location || tier > cache.tier) {
+    if (Date.now() - cached.time > CACHE_TIMEOUT || location !== cached.location || tier > cached.tier) {
       return SendAction.NEW;
     }
-    if (tier === cache.tier) {
+    if (tier === cached.tier) {
       return SendAction.IGNORE;
     }
     return SendAction.UPDATE;
@@ -101,10 +101,10 @@ server.post<{Body: StarData}>("/shooting-star", async (request) => {
   const action = getAction(data);
   switch(action) {
     case SendAction.NEW:
-      sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: request.body});
+      sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: data});
       break;
     case SendAction.UPDATE:
-      sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: request.body});
+      sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: data});
       break;
     default:
       console.log(`Ignoring POST request: ${data}`);
