@@ -2,4 +2,11 @@
 node_modules
 .env
 
+# local SQLite database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/data
+
 *.js

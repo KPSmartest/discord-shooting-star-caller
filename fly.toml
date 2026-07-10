@@ -1,42 +1,41 @@
-# fly.toml file generated for discord-shooting-star-caller on 2022-08-30T13:37:55+12:00
+# fly.toml for the Discord reminder bot.
+# The Fly app is still named "discord-shooting-star-caller" so we reuse the existing
+# app, secrets, and CI token. Rename with `fly apps create` + a new volume if you prefer.
 
 app = "discord-shooting-star-caller"
+primary_region = "syd" # Sydney — closest region to NZ. The volume must live in this region.
+
 kill_signal = "SIGINT"
 kill_timeout = 5
-processes = []
 
 [build]
   builder = "heroku/buildpacks:20"
 
 [env]
   PORT = "8080"
+  DATABASE_PATH = "/data/reminders.db"
+  TIMEZONE = "Pacific/Auckland"
+  # Non-secret identifiers / public key. The bot token is NOT here — it is the only real
+  # secret and is set with `fly secrets set DISCORD_BOT_TOKEN=...`.
+  APPLICATION_ID = "1524944515469807616"
+  GUILD_ID = "971306416260411403"
+  DISCORD_PUBLIC_KEY = "d516c53d6dea9b013d9a4c1d28b916e7eda00da5979ded5c4bac576bcd45ad91"
 
-[experimental]
-  allowed_public_ports = []
-  auto_rollback = true
+# SQLite lives on a persistent volume. Create it once with:
+#   fly volumes create reminder_data --size 1 --region syd
+[mounts]
+  source = "reminder_data"
+  destination = "/data"
 
-[[services]]
-  http_checks = []
+# Always-on single machine: the in-process scheduler must keep running to fire reminders,
+# so we never auto-stop. Single machine only (SQLite is bound to one volume).
+[http_service]
   internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
-  [services.concurrency]
-    hard_limit = 25
-    soft_limit = 20
-    type = "connections"
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
 
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
-
-  [[services.tcp_checks]]
-    grace_period = "1s"
-    interval = "15s"
-    restart_limit = 0
-    timeout = "2s"
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
