@@ -1,84 +1,44 @@
 import fastify from "fastify";
-import fetch from "node-fetch";
 
-import {DISCORD_WEBHOOK_URL, DISCORD_UPDATE_WEBHOOK_URL, PORT} from "./config";
-import {StarData} from "./types";
-
-const tierToEmoji = {
-  0: "💀",
-  1: "💩",
-  2: "😕",
-  3: "🌝",
-  4: "👀",
-  5: "🕺",
-  6: "👯‍♂️",
-  7: "🦾",
-  8: "💪",
-  9: "🦧",
-};
-
-type AnnouncerProfile = {
-  username: string;
-  avatar_url: string;
-};
-
-const announcers: Record<string, AnnouncerProfile> = {
-  aaronGilmore: {
-    username: "Aaron Gilmore",
-    avatar_url:
-      "https://res.cloudinary.com/djboxbtij/image/upload/v1668370414/discord-shooting-star-caller/aaron_x1xgrd.jpg",
-  },
-  samUffindell: {
-    username: "Sam Uffindell",
-    avatar_url:
-      "https://res.cloudinary.com/djboxbtij/image/upload/v1668370418/discord-shooting-star-caller/sam_fzdb6t.jpg",
-  },
-} as const;
-
-function getAnnouncer(): AnnouncerProfile {
-  const randomInt = Math.floor(1 + Math.random() * (10 - 1 + 1));
-
-  if (randomInt >= 3) {
-    return announcers.samUffindell;
-  }
-
-  return announcers.aaronGilmore;
-}
-
-type SendMessageParams = {
-  webhookUrl: string;
-  data: StarData;
-};
-
-function sendMessage({webhookUrl, data}: SendMessageParams) {
-  const {sender, world, tier, location} = data;
-
-  const announcer = getAnnouncer();
-
-  const messageConfig = {
-    ...announcer,
-    content: `🌏 W${world}    ${tierToEmoji[tier]} T${tier}    🗺 ${location}    🗣 ${sender}`,
-  };
-
-  fetch(webhookUrl, {
-    method: "POST",
-    body: JSON.stringify(messageConfig),
-    headers: {"Content-Type": "application/json"},
-  });
-}
+import {handleAutocomplete, handleCommand} from "./commands";
+import {PORT} from "./config";
+import {verifyRequest} from "./discord";
+import {startScheduler} from "./scheduler";
+import {Interaction, InteractionResponseType, InteractionType} from "./types";
 
 const server = fastify();
 
+// Discord's signature is over the raw request body, so keep JSON as a string rather than
+// letting Fastify parse it before we've verified it.
+server.addContentTypeParser("application/json", {parseAs: "string"}, (_req, body, done) => {
+  done(null, body);
+});
+
 server.get("/", async (_request, reply) => {
-  reply.send({hello: "world"});
+  reply.send({status: "ok"});
 });
 
-server.post<{Body: StarData}>("/shooting-star", async (request) => {
-  sendMessage({webhookUrl: DISCORD_WEBHOOK_URL, data: request.body});
-});
+server.post("/interactions", async (request, reply) => {
+  const rawBody = request.body as string;
+  const signature = request.headers["x-signature-ed25519"] as string | undefined;
+  const timestamp = request.headers["x-signature-timestamp"] as string | undefined;
 
-server.post<{Body: StarData}>("/shooting-star-update", async (request) => {
-  sendMessage({webhookUrl: DISCORD_UPDATE_WEBHOOK_URL, data: request.body});
+  if (!verifyRequest(rawBody, signature, timestamp)) {
+    return reply.code(401).send("invalid request signature");
+  }
+
+  const interaction = JSON.parse(rawBody) as Interaction;
+
+  switch (interaction.type) {
+    case InteractionType.PING:
+      return reply.send({type: InteractionResponseType.PONG});
+    case InteractionType.APPLICATION_COMMAND:
+      return reply.send(await handleCommand(interaction));
+    case InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
+      return reply.send(handleAutocomplete(interaction));
+    default:
+      return reply.code(400).send("unhandled interaction type");
+  }
 });
 
 server.listen({port: PORT, host: "::"}, (err, address) => {
@@ -87,4 +47,6 @@ server.listen({port: PORT, host: "::"}, (err, address) => {
     process.exit(1);
   }
   console.log(`Server listening at ${address}`);
+  startScheduler();
+  console.log(`Reminder scheduler started (polling every ${30}s)`);
 });
