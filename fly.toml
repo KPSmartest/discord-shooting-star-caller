@@ -8,8 +8,7 @@ primary_region = "syd" # Sydney — closest region to NZ. The volume must live i
 kill_signal = "SIGINT"
 kill_timeout = 5
 
-[build]
-  builder = "heroku/buildpacks:20"
+# Build from the Dockerfile (more reliable on Fly's remote builder than classic buildpacks).
 
 [env]
   PORT = "8080"
